@@ -73,8 +73,8 @@ worksheet_resp = sheet_resp.sheet1
 # RUTA PRINCIPAL
 # -----------------------------
 
-@app.route("/")
-def home():
+@app.route("/quiz/<quiz_id>")
+def home(quiz_id):
 
     # -----------------------------
     # LISTA ESTUDIANTES
@@ -82,12 +82,25 @@ def home():
 
     opciones = ""
 
-    for _, row in df_est.iterrows():
+# -----------------------------
+# PARALELOS HABILITADOS
+# -----------------------------
+data_asig = worksheet_asig.get_all_records()
+df_asig = pd.DataFrame(data_asig)
+paralelos_habilitados = df_asig[
+    (df_asig["id_quiz"] == quiz_id) &
+    (df_asig["habilitado"] == True)
+]["paralelo"].tolist()
+# -----------------------------
+# FILTRAR ESTUDIANTES
+# -----------------------------
+df_est_filtrado = df_est[
+    df_est["paralelo"].isin(paralelos_habilitados)
+]
 
+    for _, row in df_est_filtrado.iterrows():
         nombre = row["apellidos"] + " " + row["nombres"]
-
         id_estudiante = row["id_estudiante"]
-
         opciones += f"""
         <option value="{id_estudiante}">
         {nombre}
@@ -103,8 +116,6 @@ def home():
     # -----------------------------
     data_quiz = worksheet_quiz.get_all_records()
     df_quiz = pd.DataFrame(data_quiz)
-
-    quiz_id = "QUIZ001"
 
     quiz_data = df_quiz[df_quiz["id_quiz"] == quiz_id]
     if quiz_data.empty:
@@ -280,7 +291,7 @@ def home():
 
     <h2>Seleccione estudiante</h2>
 
-    <form method="POST" action="/submit">
+    <form method="POST" action="/submit/{quiz_id}">
 
     <select name="id_estudiante">
         {opciones}
@@ -400,13 +411,12 @@ from flask import request
 # RECIBIR RESPUESTAS
 # -----------------------------
 
-@app.route("/submit", methods=["POST"])
-def submit():
+@app.route("/submit/<quiz_id>", methods=["POST"])
 
+def submit(quiz_id):
     respuestas = request.form
 
     id_estudiante = respuestas["id_estudiante"]
-    quiz_id = "QUIZ001"
     
     # -----------------------------
     # RECARGAR RESPUESTAS
@@ -442,8 +452,6 @@ def submit():
             continue
 
         pregunta_data = df_preg[df_preg["id_pregunta"] == pregunta]
-
-        quiz_id = "QUIZ001"
 
         if not pregunta_data.empty:
 
