@@ -62,8 +62,6 @@ df_qp = pd.DataFrame(data_qp)
 # -----------------------------
 sheet_quiz = client.open("Quizzes")
 worksheet_quiz = sheet_quiz.sheet1
-data_quiz = worksheet_quiz.get_all_records()
-df_quiz = pd.DataFrame(data_quiz)
 
 # -----------------------------
 # LEER RESPUESTAS
@@ -99,6 +97,12 @@ def home():
     # -----------------------------
     # PREGUNTAS DEL QUIZ
     # -----------------------------
+
+    # -----------------------------
+    # RECARGAR QUIZZES
+    # -----------------------------
+    data_quiz = worksheet_quiz.get_all_records()
+    df_quiz = pd.DataFrame(data_quiz)
 
     quiz_id = "QUIZ001"
 
