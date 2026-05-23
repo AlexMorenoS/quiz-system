@@ -17,10 +17,16 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    r"d:\Mardisresearch\OneDrive - mardisresearch.com\Documentos\99. Personal\ESPOL\quiz-system\sistemaquizzes-123456.json",
+import json
+import os
+creds_dict = json.loads(
+    os.environ["GOOGLE_CREDENTIALS"]
+)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    creds_dict,
     scope
 )
+
 
 client = gspread.authorize(creds)
 
