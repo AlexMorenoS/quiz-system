@@ -64,6 +64,12 @@ sheet_quiz = client.open("Quizzes")
 worksheet_quiz = sheet_quiz.sheet1
 
 # -----------------------------
+# LEER ASIGNACION QUIZZES
+# -----------------------------
+sheet_asig = client.open("AsignacionQuizzes")
+worksheet_asig = sheet_asig.sheet1
+
+# -----------------------------
 # LEER RESPUESTAS
 # -----------------------------
 sheet_resp = client.open("Respuestas")
@@ -82,21 +88,21 @@ def home(quiz_id):
 
     opciones = ""
 
-# -----------------------------
-# PARALELOS HABILITADOS
-# -----------------------------
-data_asig = worksheet_asig.get_all_records()
-df_asig = pd.DataFrame(data_asig)
-paralelos_habilitados = df_asig[
-    (df_asig["id_quiz"] == quiz_id) &
-    (df_asig["habilitado"] == True)
-]["paralelo"].tolist()
-# -----------------------------
-# FILTRAR ESTUDIANTES
-# -----------------------------
-df_est_filtrado = df_est[
-    df_est["paralelo"].isin(paralelos_habilitados)
-]
+    # -----------------------------
+    # PARALELOS HABILITADOS
+    # -----------------------------
+    data_asig = worksheet_asig.get_all_records()
+    df_asig = pd.DataFrame(data_asig)
+    paralelos_habilitados = df_asig[
+        (df_asig["id_quiz"] == quiz_id) &
+        (df_asig["habilitado"] == True)
+    ]["paralelo"].tolist()
+    # -----------------------------
+    # FILTRAR ESTUDIANTES
+    # -----------------------------
+    df_est_filtrado = df_est[
+        df_est["paralelo"].isin(paralelos_habilitados)
+    ]
 
     for _, row in df_est_filtrado.iterrows():
         nombre = row["apellidos"] + " " + row["nombres"]
