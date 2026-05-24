@@ -127,6 +127,9 @@ def home(quiz_id):
     if quiz_data.empty:
         return "<h1>Quiz no encontrado</h1>"
     quiz_row = quiz_data.iloc[0]
+    nombre_quiz = quiz_row["nombre_quiz"]
+    materia = quiz_row["materia"]
+
     tiempo_limite = int(quiz_row["tiempo_limite_min"])
     fecha_inicio = pd.to_datetime(quiz_row["fecha_inicio"])
     fecha_fin = pd.to_datetime(quiz_row["fecha_fin"])
@@ -193,9 +196,12 @@ def home(quiz_id):
     # -----------------------------
 
     html = f"""
- 
+    
     <html>
-
+ 
+    <h1>{nombre_quiz}</h1>
+    <h2>{materia}</h2>
+    
     <head>
 
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -299,9 +305,17 @@ def home(quiz_id):
 
     <form method="POST" action="/submit/{quiz_id}">
 
-    <select name="id_estudiante">
-        {opciones}
-    </select>
+    <label>
+    Código estudiante:
+    </label>
+
+    <br><br>
+
+    <input
+        type="text"
+        name="id_estudiante"
+        required
+    >
 
     {html_preguntas}
 
