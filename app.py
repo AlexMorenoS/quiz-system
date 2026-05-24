@@ -455,8 +455,52 @@ from flask import request
 # RECIBIR RESPUESTAS
 # -----------------------------
 
-@app.route("/submit/<quiz_id>", methods=["POST"])
+@app.route("/reporte/<quiz_id>")
+def reporte(quiz_id):
+    data_resp = worksheet_resp.get_all_records()
+    df_resp = pd.DataFrame(data_resp)
+    df_quiz = df_resp[
+        df_resp["id_quiz"] == quiz_id
+    ]
+    resumen = df_quiz.groupby(
+        "id_estudiante"
+    ).agg({
+        "puntaje": "sum",
+        "fecha_hora": "max"
+    }).reset_index()
+    resumen = resumen.merge(
+        df_est[
+            ["id_estudiante", "apellidos", "nombres"]
+        ],
+        on="id_estudiante",
+        how="left"
+    )
+    html = f"""
+    <h1>Reporte {quiz_id}</h1>
+    <table border="1" cellpadding="10">
+    <tr>
+        <th>Estudiante</th>
+        <th>Nota</th>
+        <th>Fecha</th>
+    </tr>
+    """
+    for _, row in resumen.iterrows():
+        nombre = f"""
+        {row['apellidos']}
+        {row['nombres']}
+        """
+        html += f"""
+        <tr>
+        <td>{nombre}</td>
+        <td>{row['puntaje']}</td>
+        <td>{row['fecha_hora']}</td>
+        </tr>
+        """
+    html += "</table>"
 
+    return html
+
+@app.route("/submit/<quiz_id>", methods=["POST"])
 def submit(quiz_id):
     respuestas = request.form
 
