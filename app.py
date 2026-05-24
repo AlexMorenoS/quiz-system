@@ -455,9 +455,13 @@ def submit(quiz_id):
         )
     ]
     estudiante_data = df_est_filtrado[
-        df_est_filtrado["id_estudiante"].astype(str)
-        == str(id_estudiante)
+        df_est_filtrado["id_estudiante"]
+        .astype(str)
+        .str.strip()
+        .str.replace(".0", "", regex=False)
+        == str(id_estudiante).strip()
     ]
+
     if estudiante_data.empty:
         return """
         <h1>
