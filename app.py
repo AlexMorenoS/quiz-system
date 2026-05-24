@@ -17,15 +17,21 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-import json
 import os
-creds_dict = json.loads(
-    os.environ["GOOGLE_CREDENTIALS"]
-)
-creds = ServiceAccountCredentials.from_json_keyfile_dict(
-    creds_dict,
-    scope
-)
+import json
+if os.environ.get("GOOGLE_CREDENTIALS"):
+    creds_dict = json.loads(
+        os.environ["GOOGLE_CREDENTIALS"]
+    )
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        creds_dict,
+        scope
+    )
+else:
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        r"d:\Mardisresearch\OneDrive - mardisresearch.com\Documentos\99. Personal\ESPOL\quiz-system\sistemaquizzes-123456.json",
+        scope
+    )
 
 
 client = gspread.authorize(creds)
@@ -93,19 +99,30 @@ def home(quiz_id):
     # -----------------------------
     data_asig = worksheet_asig.get_all_records()
     df_asig = pd.DataFrame(data_asig)
+    print(df_asig)
+    print(df_asig.dtypes)
+    print("QUIZ recibido submit:", quiz_id)
+    data_asig = worksheet_asig.get_all_records()
+    df_asig = pd.DataFrame(data_asig)
+    print(df_asig)
     paralelos_habilitados = df_asig[
-        (df_asig["id_quiz"] == quiz_id) &
-        (df_asig["habilitado"] == True)
+        (
+            df_asig["id_quiz"]
+            .astype(str)
+            .str.strip()
+            == str(quiz_id).strip()
+        )
     ]["paralelo"].tolist()
-    
-    # -----------------------------
-    # FILTRAR ESTUDIANTES
-    # -----------------------------
+    print("Paralelos habilitados:", paralelos_habilitados)
     df_est_filtrado = df_est[
-        df_est["paralelo"].astype(str).str.strip().isin(
-        [str(p).strip() for p in paralelos_habilitados]
+        df_est["paralelo"]
+        .astype(str)
+        .str.strip()
+        .isin(
+            [str(p).strip() for p in paralelos_habilitados]
         )
     ]
+    print(df_est_filtrado[["id_estudiante", "paralelo"]])
     
     for _, row in df_est_filtrado.iterrows():
         nombre = row["apellidos"] + " " + row["nombres"]
@@ -440,27 +457,43 @@ def submit(quiz_id):
     respuestas = request.form
 
     id_estudiante = respuestas["id_estudiante"]
-    # -----------------------------
-    # VALIDAR ESTUDIANTE PARA QUIZ
-    # -----------------------------
+    print("ID ingresado:", id_estudiante)
+    
+    print("QUIZ recibido submit:", quiz_id)
     data_asig = worksheet_asig.get_all_records()
     df_asig = pd.DataFrame(data_asig)
+    print(df_asig)
+
     paralelos_habilitados = df_asig[
-        (df_asig["id_quiz"] == quiz_id) &
-        (df_asig["habilitado"] == True)
+        (
+            df_asig["id_quiz"]
+            .astype(str)
+            .str.strip()
+            == str(quiz_id).strip()
+        )
     ]["paralelo"].tolist()
+
+    print("Paralelos habilitados:", paralelos_habilitados)
+
     df_est_filtrado = df_est[
-        df_est["paralelo"].astype(str).str.strip().isin(
-        [str(p).strip() for p in paralelos_habilitados]
+        df_est["paralelo"]
+        .astype(str)
+        .str.strip()
+        .isin(
+            [str(p).strip() for p in paralelos_habilitados]
         )
     ]
+
+    print(df_est_filtrado[["id_estudiante", "paralelo"]])
+
     estudiante_data = df_est_filtrado[
         df_est_filtrado["id_estudiante"]
         .astype(str)
         .str.strip()
-        .str.replace(".0", "", regex=False)
         == str(id_estudiante).strip()
     ]
+
+    print(estudiante_data)
 
     if estudiante_data.empty:
         return """
@@ -474,6 +507,14 @@ def submit(quiz_id):
     # -----------------------------
     data_resp = worksheet_resp.get_all_records()
     df_resp = pd.DataFrame(data_resp)
+
+    if df_resp.empty:
+        df_resp = pd.DataFrame(
+            columns=[
+                "id_quiz",
+                "id_estudiante"
+            ]
+        )
 
     intentos_previos = df_resp[
         (df_resp["id_quiz"] == quiz_id) &
