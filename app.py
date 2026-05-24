@@ -456,18 +456,52 @@ from flask import request
 # -----------------------------
 
 @app.route("/reporte/<quiz_id>")
+@app.route("/reporte/<quiz_id>")
 def reporte(quiz_id):
+
+    # -----------------------------
+    # LEER RESPUESTAS
+    # -----------------------------
+
     data_resp = worksheet_resp.get_all_records()
+
     df_resp = pd.DataFrame(data_resp)
+
+    # -----------------------------
+    # FILTRAR QUIZ
+    # -----------------------------
+
     df_quiz = df_resp[
         df_resp["id_quiz"] == quiz_id
     ]
+
+    # -----------------------------
+    # DETALLE POR PREGUNTA
+    # -----------------------------
+
+    detalle = df_quiz.pivot_table(
+        index="id_estudiante",
+        columns="id_pregunta",
+        values="puntaje",
+        aggfunc="sum",
+        fill_value=0
+    ).reset_index()
+
+    # -----------------------------
+    # RESUMEN TOTAL
+    # -----------------------------
+
     resumen = df_quiz.groupby(
         "id_estudiante"
     ).agg({
         "puntaje": "sum",
         "fecha_hora": "max"
     }).reset_index()
+
+    # -----------------------------
+    # UNIR NOMBRES
+    # -----------------------------
+
     resumen = resumen.merge(
         df_est[
             ["id_estudiante", "apellidos", "nombres"]
@@ -475,30 +509,159 @@ def reporte(quiz_id):
         on="id_estudiante",
         how="left"
     )
+
+    # -----------------------------
+    # UNIR DETALLE PREGUNTAS
+    # -----------------------------
+
+    resumen = resumen.merge(
+        detalle,
+        on="id_estudiante",
+        how="left"
+    )
+
+    # -----------------------------
+    # ORDENAR APELLIDOS
+    # -----------------------------
+
+    resumen = resumen.sort_values(
+        by="apellidos"
+    )
+
+    # -----------------------------
+    # PREGUNTAS
+    # -----------------------------
+
+    preguntas = sorted(
+        df_quiz["id_pregunta"].unique()
+    )
+
+    total_preguntas = len(preguntas)
+
+    # -----------------------------
+    # HTML
+    # -----------------------------
+
     html = f"""
     <h1>Reporte {quiz_id}</h1>
+
     <table border="1" cellpadding="10">
+
     <tr>
-        <th>Estudiante</th>
-        <th>Nota</th>
-        <th>Fecha</th>
+
+    <th>Estudiante</th>
+
+    <th>Total</th>
+    """
+
+    # -----------------------------
+    # HEADERS PREGUNTAS
+    # -----------------------------
+
+    for p in preguntas:
+
+        html += f"<th>{p}</th>"
+
+    html += """
+    <th>Fecha</th>
+
     </tr>
     """
+
+    # -----------------------------
+    # FILAS ESTUDIANTES
+    # -----------------------------
+
     for _, row in resumen.iterrows():
+
         nombre = f"""
         {row['apellidos']}
         {row['nombres']}
         """
+
         html += f"""
         <tr>
+
         <td>{nombre}</td>
-        <td>{row['puntaje']}</td>
+
+        <td>
+        {row['puntaje']}/{total_preguntas}
+        </td>
+        """
+
+        # -----------------------------
+        # PUNTAJES PREGUNTAS
+        # -----------------------------
+
+        for p in preguntas:
+
+            valor = row.get(p, 0)
+
+            html += f"<td>{valor}</td>"
+
+        html += f"""
         <td>{row['fecha_hora']}</td>
+
         </tr>
         """
-    html += "</table>"
+
+    html += """
+    </table>
+
+    <br><br>
+
+    <h2>
+    Promedio por pregunta
+    </h2>
+
+    <table border="1" cellpadding="10">
+
+    <tr>
+
+    <th>Pregunta</th>
+
+    <th>Promedio</th>
+
+    </tr>
+    """
+
+    # -----------------------------
+    # PROMEDIOS
+    # -----------------------------
+
+    for p in preguntas:
+
+        promedio = df_quiz[
+            df_quiz["id_pregunta"] == p
+        ]["puntaje"].mean()
+
+        html += f"""
+        <tr>
+
+        <td>{p}</td>
+
+        <td>{promedio:.2f}</td>
+
+        </tr>
+        """
+
+    promedio_general = (
+        resumen["puntaje"] / total_preguntas
+    ).mean()
+
+    html += f"""
+    </table>
+
+    <br>
+
+    <h2>
+    Promedio general:
+    {promedio_general:.2f}
+    </h2>
+    """
 
     return html
+
 
 @app.route("/submit/<quiz_id>", methods=["POST"])
 def submit(quiz_id):
