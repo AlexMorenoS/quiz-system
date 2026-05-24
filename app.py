@@ -99,12 +99,12 @@ def home(quiz_id):
     # -----------------------------
     data_asig = worksheet_asig.get_all_records()
     df_asig = pd.DataFrame(data_asig)
-    print(df_asig)
-    print(df_asig.dtypes)
+    #print(df_asig)
+    #print(df_asig.dtypes)
     print("QUIZ recibido submit:", quiz_id)
     data_asig = worksheet_asig.get_all_records()
     df_asig = pd.DataFrame(data_asig)
-    print(df_asig)
+    #print(df_asig)
     paralelos_habilitados = df_asig[
         (
             df_asig["id_quiz"]
@@ -113,7 +113,7 @@ def home(quiz_id):
             == str(quiz_id).strip()
         )
     ]["paralelo"].tolist()
-    print("Paralelos habilitados:", paralelos_habilitados)
+    #print("Paralelos habilitados:", paralelos_habilitados)
     df_est_filtrado = df_est[
         df_est["paralelo"]
         .astype(str)
@@ -122,7 +122,7 @@ def home(quiz_id):
             [str(p).strip() for p in paralelos_habilitados]
         )
     ]
-    print(df_est_filtrado[["id_estudiante", "paralelo"]])
+    #print(df_est_filtrado[["id_estudiante", "paralelo"]])
     
     for _, row in df_est_filtrado.iterrows():
         nombre = row["apellidos"] + " " + row["nombres"]
@@ -459,10 +459,10 @@ def submit(quiz_id):
     id_estudiante = respuestas["id_estudiante"]
     print("ID ingresado:", id_estudiante)
     
-    print("QUIZ recibido submit:", quiz_id)
+    #print("QUIZ recibido submit:", quiz_id)
     data_asig = worksheet_asig.get_all_records()
     df_asig = pd.DataFrame(data_asig)
-    print(df_asig)
+    #print(df_asig)
 
     paralelos_habilitados = df_asig[
         (
@@ -473,7 +473,7 @@ def submit(quiz_id):
         )
     ]["paralelo"].tolist()
 
-    print("Paralelos habilitados:", paralelos_habilitados)
+    #print("Paralelos habilitados:", paralelos_habilitados)
 
     df_est_filtrado = df_est[
         df_est["paralelo"]
@@ -484,7 +484,7 @@ def submit(quiz_id):
         )
     ]
 
-    print(df_est_filtrado[["id_estudiante", "paralelo"]])
+    #print(df_est_filtrado[["id_estudiante", "paralelo"]])
 
     estudiante_data = df_est_filtrado[
         df_est_filtrado["id_estudiante"]
@@ -493,7 +493,7 @@ def submit(quiz_id):
         == str(id_estudiante).strip()
     ]
 
-    print(estudiante_data)
+    #print(estudiante_data)
 
     if estudiante_data.empty:
         return """
@@ -539,33 +539,21 @@ def submit(quiz_id):
     """
 
     for pregunta, respuesta in respuestas.items():
-
         if pregunta == "id_estudiante":
             continue
-
         pregunta_data = df_preg[df_preg["id_pregunta"] == pregunta]
-
         if not pregunta_data.empty:
-
             row = pregunta_data.iloc[0]
-
             correcta = row["correcta"]
-
             total += 1
-
             if respuesta == correcta:
-
                 puntaje += 1
-
                 estado = "✅ Correcta"
-
             else:
-
                 estado = f"""
                 ❌ Incorrecta.
                 Correcta: {correcta}
                 """
-
             id_estudiante = respuestas["id_estudiante"]
             id_respuesta = str(uuid.uuid4())
             fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -582,7 +570,6 @@ def submit(quiz_id):
                 fecha_hora,
                 1
             ])
-
             html += f"""
             <p>
             <b>{pregunta}</b><br>
