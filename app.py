@@ -150,6 +150,10 @@ def home(quiz_id):
     nombre_quiz = quiz_row["nombre_quiz"]
     materia = quiz_row["materia"]
 
+    feedback_inmediato = str(
+        quiz_row["feedback_inmediato"]
+    ).upper() == "TRUE"
+    
     tiempo_limite = int(quiz_row["tiempo_limite_min"])
     fecha_inicio = pd.to_datetime(quiz_row["fecha_inicio"])
     fecha_fin = pd.to_datetime(quiz_row["fecha_fin"])
@@ -456,6 +460,19 @@ from flask import request
 def submit(quiz_id):
     respuestas = request.form
 
+    # -----------------------------
+    # CONFIGURACION QUIZ
+    # -----------------------------
+    data_quiz = worksheet_quiz.get_all_records()
+    df_quiz = pd.DataFrame(data_quiz)
+    quiz_data = df_quiz[
+        df_quiz["id_quiz"] == quiz_id
+    ]
+    quiz_row = quiz_data.iloc[0]
+    feedback_inmediato = str(
+        quiz_row["feedback_inmediato"]
+    ).upper() == "TRUE"
+
     id_estudiante = respuestas["id_estudiante"]
     print("ID ingresado:", id_estudiante)
     
@@ -533,8 +550,52 @@ def submit(quiz_id):
 
     total = 0
 
-    html = """
-    <h1>Resultado Quiz</h1>
+    html = f"""
+    <html>
+
+    <head>
+
+    <style>
+
+    body {{
+        font-family: Arial;
+        margin: 40px;
+        background-color: #f4f6f9;
+    }}
+
+    .container {{
+        max-width: 900px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+    }}
+
+    .correcta {{
+        color: green;
+    }}
+
+    .incorrecta {{
+        color: red;
+    }}
+
+    .feedback {{
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }}
+
+    </style>
+
+    </head>
+
+    <body>
+
+    <div class="container">
+
+    <h1>Quiz enviado correctamente</h1>
+
     <hr>
     """
 
@@ -570,19 +631,36 @@ def submit(quiz_id):
                 fecha_hora,
                 1
             ])
-            html += f"""
-            <p>
-            <b>{pregunta}</b><br>
-            Respuesta estudiante: {respuesta}<br>
-            {estado}
-            </p>
-            <hr>
-            """
+            # -----------------------------
+            # FEEDBACK
+            # -----------------------------
+            if feedback_inmediato:
+                html += f"""
+                <div class="feedback">
+                <p>
+                <b>{pregunta}</b>
+                </p>
+                <p>
+                Tu respuesta: {respuesta}
+                </p>
+                <p>
+                {estado}
+                </p>
+                <p>
+                {row['feedback']}
+                </p>
+                </div>
+                <hr>
+                """
 
     html += f"""
     <h2>Puntaje: {puntaje}/{total}</h2>
     """
-
+    #</div>
+    #</body>
+    #</html>
+    #"""
+    
     return html
 
 if __name__ == "__main__":
