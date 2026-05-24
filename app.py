@@ -201,7 +201,7 @@ def home(quiz_id):
  
     <h1>{nombre_quiz}</h1>
     <h2>{materia}</h2>
-    
+
     <head>
 
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -437,6 +437,28 @@ def submit(quiz_id):
     respuestas = request.form
 
     id_estudiante = respuestas["id_estudiante"]
+    # -----------------------------
+    # VALIDAR ESTUDIANTE PARA QUIZ
+    # -----------------------------
+    data_asig = worksheet_asig.get_all_records()
+    df_asig = pd.DataFrame(data_asig)
+    paralelos_habilitados = df_asig[
+        (df_asig["id_quiz"] == quiz_id) &
+        (df_asig["habilitado"] == True)
+    ]["paralelo"].tolist()
+    df_est_filtrado = df_est[
+        df_est["paralelo"].isin(paralelos_habilitados)
+    ]
+    estudiante_data = df_est_filtrado[
+        df_est_filtrado["id_estudiante"].astype(str)
+        == str(id_estudiante)
+    ]
+    if estudiante_data.empty:
+        return """
+        <h1>
+        Código estudiante inválido para este quiz
+        </h1>
+        """
     
     # -----------------------------
     # RECARGAR RESPUESTAS
