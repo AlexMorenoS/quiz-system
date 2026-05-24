@@ -450,7 +450,9 @@ def submit(quiz_id):
         (df_asig["habilitado"] == True)
     ]["paralelo"].tolist()
     df_est_filtrado = df_est[
-        df_est["paralelo"].isin(paralelos_habilitados)
+        df_est["paralelo"].astype(str).str.strip().isin(
+        [str(p).strip() for p in paralelos_habilitados]
+        )
     ]
     estudiante_data = df_est_filtrado[
         df_est_filtrado["id_estudiante"].astype(str)
