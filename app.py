@@ -178,40 +178,29 @@ def home(quiz_id):
     html_preguntas = ""
 
     for _, pq in preguntas_quiz.iterrows():
-
         id_pregunta = pq["id_pregunta"]
-
         pregunta_data = df_preg[df_preg["id_pregunta"] == id_pregunta]
-
         if not pregunta_data.empty:
-
             row = pregunta_data.iloc[0]
-
             html_preguntas += f"""
             <div class="question">
-
             <h3>{row['pregunta']}</h3>
-
             <div class="option">
             <input type="radio" name="{id_pregunta}" value="A" required>
             {row['opcion_a']}
             </div>
-
             <div class="option">
             <input type="radio" name="{id_pregunta}" value="B" required>
             {row['opcion_b']}
             </div>
-
             <div class="option">
             <input type="radio" name="{id_pregunta}" value="C" required>
             {row['opcion_c']}
             </div>
-
             <div class="option">
             <input type="radio" name="{id_pregunta}" value="D" required>
             {row['opcion_d']}
             </div>
-
             </div>
             """
 
@@ -222,10 +211,8 @@ def home(quiz_id):
     html = f"""
     
     <html>
- 
     <h1>{nombre_quiz}</h1>
     <h2>{materia}</h2>
-
     <head>
 
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -260,7 +247,6 @@ def home(quiz_id):
         background-color: #f4f6f9;
         margin: 40px;
     }}
-
     .container {{
         max-width: 900px;
         margin: auto;
@@ -269,7 +255,6 @@ def home(quiz_id):
         border-radius: 12px;
         box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
     }}
-
     .question {{
         background: #fafafa;
         border: 1px solid #ddd;
@@ -277,22 +262,18 @@ def home(quiz_id):
         padding: 20px;
         margin-bottom: 20px;
     }}
-
     h1 {{
         color: #1f2937;
     }}
-
     h2 {{
         color: #374151;
     }}
-
     select {{
         padding: 10px;
         font-size: 16px;
         width: 100%;
         margin-bottom: 25px;
     }}
-
     button {{
         background-color: #2563eb;
         color: white;
@@ -302,59 +283,54 @@ def home(quiz_id):
         font-size: 16px;
         cursor: pointer;
     }}
-
     button:hover {{
         background-color: #1d4ed8;
     }}
-
     .option {{
         margin-top: 10px;
     }}
-
     </style>
-
     </head>
-
     <body>
-
     <div class="container">
-
     <h1>Sistema de Quizzes</h1>
-    
     <h2 id="timer">
     Tiempo restante:
     </h2>
 
     <h2>Seleccione estudiante</h2>
-
     <form method="POST" action="/submit/{quiz_id}">
-
     <label>
     Código estudiante:
     </label>
-
     <br><br>
-
     <input
         type="text"
         name="id_estudiante"
         required
     >
 
+    <br><br>
+    <label>
+    Número presencial:
+    </label>
+    <br><br>
+    <input
+        type="number"
+        name="numero_presencial"
+        required
+    >
+    <br><br>
+    
     {html_preguntas}
 
     <br>
-
     <button type="submit">
     Enviar Quiz
     </button>
-
     </form>
-
     </div>
-
     </body>
-
     </html>
     """
 
@@ -676,11 +652,34 @@ def submit(quiz_id):
         df_quiz["id_quiz"] == quiz_id
     ]
     quiz_row = quiz_data.iloc[0]
+    max_presentes = int(
+        quiz_row["max_presentes"]
+    )
+    
+    id_estudiante = respuestas["id_estudiante"]
+    numero_presencial = int(
+    respuestas["numero_presencial"]
+    )
+    
+    if (
+        numero_presencial < 1
+           or
+        numero_presencial > max_presentes
+    ):
+        return f"""
+           <h1>
+           Número presencial inválido
+           </h1>
+           <p>
+           Debe estar entre 1 y
+           {max_presentes}
+           </p>
+           """
+            
     feedback_inmediato = str(
         quiz_row["feedback_inmediato"]
     ).upper() == "TRUE"
 
-    id_estudiante = respuestas["id_estudiante"]
     print("ID ingresado:", id_estudiante)
     
     #print("QUIZ recibido submit:", quiz_id)
@@ -732,6 +731,33 @@ def submit(quiz_id):
     data_resp = worksheet_resp.get_all_records()
     df_resp = pd.DataFrame(data_resp)
 
+    # -----------------------------
+    # VALIDAR NUMERO PRESENCIAL
+    # -----------------------------
+
+    if not df_resp.empty:
+        numero_usado = df_resp[
+            (
+                df_resp["id_quiz"]
+                .astype(str)
+                ==
+                str(quiz_id)
+            )
+            &
+            (
+                df_resp["numero_presencial"]
+                .astype(str)
+                ==
+                str(numero_presencial)
+            )
+        ]
+        if not numero_usado.empty:
+            return """
+            <h1>
+            Número presencial ya utilizado
+            </h1>
+            """
+        
     if df_resp.empty:
         df_resp = pd.DataFrame(
             columns=[
@@ -831,6 +857,7 @@ def submit(quiz_id):
                 id_respuesta,
                 quiz_id,
                 id_estudiante,
+                numero_presencial,
                 pregunta,
                 respuesta,
                 correcta_bool,
