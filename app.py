@@ -4,9 +4,13 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 from datetime import datetime
+import pytz
 import uuid
 
 app = Flask(__name__)
+ecuador_tz = pytz.timezone(
+    "America/Guayaquil"
+)
 
 # -----------------------------
 # CONEXIÓN GOOGLE SHEETS
@@ -157,7 +161,7 @@ def home(quiz_id):
     tiempo_limite = int(quiz_row["tiempo_limite_min"])
     fecha_inicio = pd.to_datetime(quiz_row["fecha_inicio"])
     fecha_fin = pd.to_datetime(quiz_row["fecha_fin"])
-    ahora = datetime.now()
+    ahora = datetime.now(ecuador_tz)
     if ahora < fecha_inicio:
         return """
         <h1>Quiz no disponible</h1>
@@ -850,7 +854,7 @@ def submit(quiz_id):
                 """
             id_estudiante = respuestas["id_estudiante"]
             id_respuesta = str(uuid.uuid4())
-            fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fecha_hora = datetime.now(ecuador_tz).strftime("%Y-%m-%d %H:%M:%S")
             correcta_bool = respuesta == correcta
             puntaje_pregunta = 1 if correcta_bool else 0
             worksheet_resp.append_row([
