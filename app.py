@@ -159,15 +159,15 @@ def home(quiz_id):
     ).upper() == "TRUE"
     
     tiempo_limite = int(quiz_row["tiempo_limite_min"])
-    fecha_inicio = ecuador_tz.localize(
-        pd.to_datetime(
-            quiz_row["fecha_inicio"]
-        ).to_pydatetime()
+    fecha_inicio = pd.to_datetime(
+        quiz_row["fecha_inicio"]
+    ).tz_localize(
+        "America/Guayaquil"
     )
-    fecha_fin = ecuador_tz.localize(
-        pd.to_datetime(
-            quiz_row["fecha_fin"]
-        ).to_pydatetime()
+    fecha_fin = pd.to_datetime(
+        quiz_row["fecha_fin"]
+    ).tz_localize(
+        "America/Guayaquil"
     )
     ahora = datetime.now(ecuador_tz)
 
