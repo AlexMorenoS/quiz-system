@@ -159,9 +159,18 @@ def home(quiz_id):
     ).upper() == "TRUE"
     
     tiempo_limite = int(quiz_row["tiempo_limite_min"])
-    fecha_inicio = pd.to_datetime(quiz_row["fecha_inicio"])
-    fecha_fin = pd.to_datetime(quiz_row["fecha_fin"])
+    fecha_inicio = ecuador_tz.localize(
+        pd.to_datetime(
+            quiz_row["fecha_inicio"]
+        ).to_pydatetime()
+    )
+    fecha_fin = ecuador_tz.localize(
+        pd.to_datetime(
+            quiz_row["fecha_fin"]
+        ).to_pydatetime()
+    )
     ahora = datetime.now(ecuador_tz)
+
     if ahora < fecha_inicio:
         return """
         <h1>Quiz no disponible</h1>
